@@ -24,7 +24,6 @@
             </select>
         </label>
         <button class="btn">Filtrar</button>
-        <a class="btn" href="{% url 'reportes_csv' %}{% if request.GET %}?{{ request.GET.urlencode }}{% endif %}">Exportar CSV</a>
     </form>
 
     <!-- Insertar panel completo (cards + charts) -->
