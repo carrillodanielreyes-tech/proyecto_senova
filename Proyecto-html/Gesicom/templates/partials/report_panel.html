@@ -1,0 +1,96 @@
+<div class="cards">
+    <div class="card">
+        <div class="card-center"><div class="card-icon">📁</div><div>
+            <div class="card-value">{{ total_envios|default:0 }}</div>
+            <div class="card-label">Total Evidencias</div>
+        </div></div>
+        <div class="card-foot">{{ nuevas_30d }} nuevas (30 días)</div>
+    </div>
+    <div class="card card-emphasized">
+        <div class="card-center"><div class="card-icon">➕</div><div>
+            <div class="card-value">{{ nuevas_30d|default:0 }}</div>
+            <div class="card-label">Nuevas Evidencias</div>
+        </div></div>
+        <div class="card-foot">Últimos 30 días</div>
+    </div>
+    <div class="card">
+        <div class="card-center"><div class="card-icon">✅</div><div>
+            <div class="card-value">{{ aprobadas|default:0 }}</div>
+            <div class="card-label">Evidencias Aprobadas</div>
+        </div></div>
+        <div class="card-foot">Últimos 30 días: {{ aprobadas_30d }}</div>
+    </div>
+</div>
+
+<div class="grid">
+    <div class="panel">
+        <h3>Evidencias Trimestrales</h3>
+        <canvas id="chart_trimestres" height="220"></canvas>
+        <div class="chart-empty" style="margin-top:12px">Sin datos disponibles</div>
+    </div>
+    <div class="panel">
+        <h3>Categorías de Evidencia</h3>
+        <canvas id="chart_categorias" height="220"></canvas>
+        <h3 style="margin-top:18px">Estado de Evidencia</h3>
+        <div class="donut-wrap">
+            <canvas id="chart_estado" height="160"></canvas>
+        </div>
+        <h3 style="margin-top:18px">Evidencias por Usuario</h3>
+        <canvas id="chart_usuarios" height="180"></canvas>
+    </div>
+</div>
+
+<script>
+// Datos desde el servidor
+const categoriasLabels = {{ categorias_labels_json|safe }};
+const categoriasData = {{ categorias_data_json|safe }};
+
+// Gráfica trimestral
+const trimestresLabels = {{ trimestres_labels_json|safe }};
+const datosTrimestralesNuevas = {{ datos_trimestrales_nuevas_json|safe }};
+const datosTrimestralesAprobadas = {{ datos_trimestrales_aprobadas_json|safe }};
+const ctxTrim = document.getElementById('chart_trimestres')?.getContext('2d');
+if (ctxTrim) {
+    new Chart(ctxTrim, {
+        type: 'bar',
+        data: {
+            labels: trimestresLabels,
+            datasets: [
+                { label: 'Nuevas', data: datosTrimestralesNuevas, backgroundColor: '#2CB66A' },
+                { label: 'Aprobadas', data: datosTrimestralesAprobadas, backgroundColor: '#1EA7D7' }
+            ]
+        },
+        options: { responsive:true, maintainAspectRatio:false }
+    });
+}
+
+// Pie de categorias
+const ctxCat = document.getElementById('chart_categorias')?.getContext('2d');
+if (ctxCat) {
+    new Chart(ctxCat, {
+        type: 'doughnut',
+        data: { labels: categoriasLabels, datasets: [{ data: categoriasData, backgroundColor: ['#1EA7D7','#2CB66A','#F6A623','#8E44AD','#FF6B6B'] }] },
+        options: { responsive:true, maintainAspectRatio:false }
+    });
+}
+
+// Estado donut (Aprobadas vs resto)
+const total = {{ total_envios|default:0 }};
+const aprob = {{ aprobadas|default:0 }};
+const ctxEstado = document.getElementById('chart_estado')?.getContext('2d');
+if (ctxEstado) {
+    new Chart(ctxEstado, { type: 'doughnut', data: { labels:['Aprobadas','No Aprobadas'], datasets:[{ data:[aprob, Math.max(0,total-aprob)], backgroundColor:['#2CB66A','#FF6B6B'] }] }, options:{cutout:'70%'} });
+}
+
+// Usuarios
+const usuariosLabels = {{ usuarios_labels_json|safe }};
+const usuariosData = {{ usuarios_data_json|safe }};
+const ctxUsers = document.getElementById('chart_usuarios')?.getContext('2d');
+if (ctxUsers) {
+    new Chart(ctxUsers, {
+        type: 'bar',
+        data: { labels: usuariosLabels, datasets:[{ label:'Evidencias', data: usuariosData, backgroundColor:['#2CB66A','#F6A623','#1EA7D7','#8E44AD','#FF6B6B','#5D9CEC'] }] },
+        options:{responsive:true, maintainAspectRatio:false}
+    });
+}
+</script>

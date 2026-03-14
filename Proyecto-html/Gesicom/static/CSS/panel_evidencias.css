@@ -1,10 +1,5 @@
 /* Estilos para el panel de evidencias - colores institucionales aproximados */
-.root-colors{
-    /* Paleta SENA (aproximada) */
-}
-:root{
-    --sena-green: #007a3d; /* verde principal SENA (aprox) */
-    --sena-dark: #00562a;
+/* Paleta SENA (aproximada) */
 :root{
     --sena-green: #007a3d; /* verde principal SENA (aprox) */
     --sena-dark: #00562a;
