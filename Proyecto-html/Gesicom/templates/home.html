@@ -16,16 +16,11 @@
         <small>Panel del Usuario</small>
     </div>
 
-    <nav>
-        <a href="{% url 'home' %}">Inicio</a>
-        <a href="{% url 'evidencia' %}">Enviar evidencia</a>
-        <a href="{% url 'evidencias_list' %}">Mis evidencias</a>
-        <a href="#perfil">Perfil</a>
-    </nav>
+ 
 
     <div class="user-menu-container">
         <div class="user-menu-toggle">
-            <img src="{% static 'instructor/usuario.png' %}" alt="Avatar" class="avatar">
+            <img src="{% static 'img/instructor.png' %}" alt="Avatar" class="avatar">
             <span>{{ user.first_name|default:user.username }}</span>
             <ul class="user-dropdown">
                 <li><a href="#perfil">Perfil</a></li>
@@ -45,7 +40,7 @@
 
     <section class="welcome-section">
         <div>
-            <img src="{% static 'instructor/usuario.png' %}" alt="avatar" class="welcome-avatar">
+            <img src="{% static 'img/instructor.png' %}" alt="avatar" class="welcome-avatar">
         </div>
         <div>
             <h2>Bienvenido, {{ user.first_name|default:user.username }}</h2>
