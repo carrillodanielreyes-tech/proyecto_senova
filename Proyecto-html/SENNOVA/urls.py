@@ -13,7 +13,7 @@ urlpatterns = [
     path('administrador/', include('ADMIN.urls')),
     path('', usuarios_views.login_view, name='login_root'),
     path('login/', usuarios_views.login_view, name='login'),
-    path('logout/', auth_views.LogoutView.as_view(next_page='login'), name='logout'),
+    path('logout/', usuarios_views.logout_view, name='logout'),
     path('register/', usuarios_views.register_view, name='register'),
     
     path('home/', gesicom_views.home, name='home'),
