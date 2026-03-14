@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GESICOM - Panel del Usuario</title>
+    <title>GESICOM - Panel del Instructor</title>
     <link rel="stylesheet" href="{% static 'instructor/panel_usuario.css' %}">
 </head>
 <body>
@@ -12,7 +12,7 @@
 <header>
     <div>
         <h1>GESICOM</h1>
-        <small>Panel del Usuario</small>
+        <small>Panel del Instructor</small>
     </div>
 
     <nav>
@@ -29,12 +29,12 @@
             <ul class="user-dropdown">
                 <li><a href="#perfil">Perfil</a></li>
                 <li><a href="#configuracion">Configuración</a></li>
-             <li>
-    <form method="post" action="{% url 'logout' %}">
-        {% csrf_token %}
-        <button type="submit">Cerrar sesión</button>
-    </form>
-</li>
+                <li>
+                    <form method="post" action="{% url 'logout' %}">
+                        {% csrf_token %}
+                        <button type="submit">Cerrar sesión</button>
+                    </form>
+                </li>
             </ul>
         </div>
     </div>
@@ -44,7 +44,7 @@
 
     <section class="breadcrumb">
         <button class="btn-inicio">inicio</button>
-        <h2>Panel del Usuario</h2>
+        <h2>Panel del Instructor</h2>
     </section>
 
     <section class="welcome-section">
@@ -53,7 +53,7 @@
         </div>
         <div>
             <h2>Bienvenido, {{ user.first_name|default:user.username }}</h2>
-            <p>Resumen general de actividades</p>
+            <p>Bienvenido al panel del Instructor</p>
         </div>
     </section>
 

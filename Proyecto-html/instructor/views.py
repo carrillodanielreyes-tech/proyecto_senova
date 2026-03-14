@@ -51,7 +51,6 @@ def login_view(request):
 	if rol not in ROLE_ROUTES:
 		rol = ''
 
-	# Mostrar mensaje de cuenta creada si viene el parámetro ?created=1
 	success_msg = None
 	if request.method == 'GET' and request.GET.get('created'):
 		success_msg = 'Cuenta creada correctamente. Por favor inicia sesión.'
@@ -61,14 +60,12 @@ def login_view(request):
 		contraseña = request.POST.get('password', '')
 		recordar = request.POST.get('remember')
 
-		# Si el usuario escribió un correo, intentar resolver su nombre de usuario
 		usuario_para_auth = entrada_usuario
 		if '@' in entrada_usuario and not User.objects.filter(username=entrada_usuario).exists():
 			try:
 				u = User.objects.get(email__iexact=entrada_usuario)
 				usuario_para_auth = u.username
 			except User.DoesNotExist:
-				# no existe un usuario con ese correo
 				pass
 
 		usuario = authenticate(request, username=usuario_para_auth, password=contraseña)
@@ -98,16 +95,15 @@ def login_view(request):
 			'username': entrada_usuario,
 		})
 
-	# Si no es POST (GET), mostrar la plantilla y el posible mensaje de cuenta creada
 	context = {'role': rol}
 	if success_msg:
 		context['success'] = success_msg
 	return render(request, 'login.html', context)
 
+
 def register_view(request):
 	rol = request.GET.get('role') or request.POST.get('role') or ''
 	if request.method == 'POST':
-		# Log de depuración: capturar los datos enviados por la interfaz
 		try:
 			logger.debug('register_view POST data: %s', dict(request.POST))
 		except Exception:
@@ -146,7 +142,6 @@ def register_view(request):
 				usuario.groups.add(g)
 				usuario.save()
 				logger.info('Usuario creado desde register_view: %s (pk=%s)', usuario.username, getattr(usuario, 'pk', None))
-				# No iniciamos sesión automáticamente: redirigir al inicio de sesión con indicador 'created'
 				return redirect('/login/?created=1')
 		except IntegrityError:
 			errores.append('El usuario o correo ya existe.')
@@ -170,14 +165,20 @@ def register_view(request):
 
 	return render(request, 'register.html', {'rol': rol})
 
+
 @login_required(login_url='login')
 def panel_usuario(request):
     """Vista del panel personal del usuario."""
     return render(request, 'usuario/panel_usuario.html')
 
 
+@login_required(login_url='login')
+def panel_instructor(request):
+    """Vista del panel personal del instructor."""
+    return render(request, 'panel_instructor.html')
+
+
 def logout_view(request):
     """Cerrar sesión del usuario."""
     logout(request)
     return redirect('login')
-

@@ -27,7 +27,6 @@ def editar_perfil(request):
     return render(request, 'editar_perfil/editar.html')
 
 def index(request):
-    # Mantener compatibilidad; usar home como contenido principal
     return render(request, 'home.html')
 
 
@@ -62,7 +61,7 @@ def logout_view(request):
 
 @require_group('instructor')
 def role_instructor(request):
-    return render(request, 'roles/instructor.html')
+    return render(request, 'panel_instructor.html')  # ← CAMBIO
 
 
 @require_group('investigador')
@@ -81,7 +80,6 @@ def role_coordinador(request):
 
 
 def portal(request):
-    # Redirige al selector de roles (home)
     return redirect('home')
 
 
@@ -89,16 +87,9 @@ def admin_menu(request):
     return render(request, 'admin/menu.html')
 
 def proyecciones(request):
-    """Muestra estadísticas generales de envíos."""
     consulta = Envio.objects.all()
-    
-    # Calcular estadísticas por tipo de evidencia
     estadisticas_categoria, total_envios = calculate_stats(consulta, 'tipo_evidencia')
-    
-    # Calcular estadísticas por proyecto
     estadisticas_proyecto, _ = calculate_stats(consulta, 'proyecto')
-    
-    # Reemplazar claves para coherencia con template
     estadisticas_categoria = [
         {'tipo_evidencia': s['field_value'], 'total': s['total'], 'porcentaje': s['porcentaje']}
         for s in estadisticas_categoria
@@ -107,7 +98,6 @@ def proyecciones(request):
         {'proyecto': s['field_value'], 'total': s['total'], 'porcentaje': s['porcentaje']}
         for s in estadisticas_proyecto
     ]
-
     context = {
         'total_envios': total_envios,
         'estadisticas_categoria': estadisticas_categoria,
@@ -117,29 +107,20 @@ def proyecciones(request):
 
 
 def reportes(request):
-    """Genera reportes filtrados de envíos."""
     proyecto = request.GET.get('proyecto', '')
     inicio = request.GET.get('start', '')
     fin = request.GET.get('end', '')
-
     consulta = Envio.objects.all()
     if proyecto:
         consulta = consulta.filter(proyecto=proyecto)
-    
     consulta = apply_date_filters(consulta, inicio, fin)
-
-    # Calcular estadísticas por categoría
     estadisticas_categoria, total_envios = calculate_stats(consulta, 'tipo_evidencia')
     estadisticas_categoria = [
         {'tipo_evidencia': s['field_value'], 'total': s['total'], 'porcentaje': s['porcentaje']}
         for s in estadisticas_categoria
     ]
-    
-    # Calcular estadísticas mensuales
     estadisticas_mensuales, _ = calculate_monthly_stats(consulta)
-
     opcion_proyectos = [p for p, _ in Envio.PROYECTO_CHOICES]
-
     context = {
         'proyecto': proyecto,
         'start': inicio,
@@ -152,17 +133,13 @@ def reportes(request):
 
 
 def reportes_csv(request):
-    """Exporta reportes filtrados en formato CSV."""
     proyecto = request.GET.get('proyecto', '')
     inicio = request.GET.get('start', '')
     fin = request.GET.get('end', '')
-
     consulta = Envio.objects.all()
     if proyecto:
         consulta = consulta.filter(proyecto=proyecto)
-    
     consulta = apply_date_filters(consulta, inicio, fin)
-
     respuesta = HttpResponse(content_type='text/csv')
     respuesta['Content-Disposition'] = 'attachment; filename="reportes.csv"'
     escritor = csv.writer(respuesta)
@@ -180,7 +157,6 @@ def reportes_csv(request):
 
 
 def reportes_trimestrales_csv(request):
-    """Exporta datos trimestrales agrupados a CSV según filtros (quarters opcional)."""
     proyecto = request.GET.get('proyecto', '')
     inicio = request.GET.get('start', '')
     fin = request.GET.get('end', '')
@@ -189,12 +165,10 @@ def reportes_trimestrales_csv(request):
     except Exception:
         num_quarters = 4
     num_quarters = max(1, min(24, num_quarters))
-
     consulta = Envio.objects.all()
     if proyecto:
         consulta = consulta.filter(proyecto=proyecto)
     consulta = apply_date_filters(consulta, inicio, fin)
-
     hoy = datetime.date.today()
     current_year = hoy.year
     current_quarter = (hoy.month - 1) // 3 + 1
@@ -207,7 +181,6 @@ def reportes_trimestrales_csv(request):
         if q == 0:
             q = 4
             y -= 1
-
     respuesta = HttpResponse(content_type='text/csv')
     respuesta['Content-Disposition'] = 'attachment; filename="reportes_trimestrales.csv"'
     escritor = csv.writer(respuesta)
@@ -238,29 +211,21 @@ def evidencia(request):
         enlace = request.POST.get('linkArchivo', '').strip()
         archivo = request.FILES.get('archivo')
         observaciones = request.POST.get('observaciones', '').strip()
-
         errores = []
-
-        # Validaciones
         if not (enlace or archivo):
             errores.append('Debe proporcionar un enlace o adjuntar un archivo (al menos uno).')
         if not nombre:
             errores.append('El nombre es obligatorio.')
         if not proyecto:
             errores.append('Debe seleccionar el proyecto.')
-
-        # Validar tamaño de archivo (máximo 10MB)
         if archivo and archivo.size > 10 * 1024 * 1024:
             errores.append('El archivo es demasiado grande. Tamaño máximo: 10MB.')
-
-        # Validar tipos de archivo permitidos
         if archivo:
             extensiones_permitidas = ['.pdf', '.doc', '.docx', '.xls', '.xlsx', '.ppt', '.pptx',
                                      '.txt', '.jpg', '.jpeg', '.png', '.zip', '.rar']
             nombre_archivo = archivo.name.lower()
             if not any(nombre_archivo.endswith(ext) for ext in extensiones_permitidas):
                 errores.append(f'Tipo de archivo no permitido. Extensiones permitidas: {", ".join(extensiones_permitidas)}')
-
         if errores:
             return render(request, 'formulario.html', {
                 'errores': errores,
@@ -271,8 +236,6 @@ def evidencia(request):
                 'enlace_archivo': enlace,
                 'observaciones': observaciones,
             })
-
-        # Crear el envío
         envio = Envio(
             usuario=request.user,
             nombre=nombre,
@@ -283,34 +246,25 @@ def evidencia(request):
             observaciones=observaciones,
         )
         envio.save()
-
-        # Mensaje de éxito con información del archivo
         mensaje_exito = 'Evidencia enviada correctamente'
         if archivo:
             mensaje_exito += f'. Archivo guardado: {envio.archivo_evidencia.name}'
-
         return render(request, 'formulario.html', {
             'exito': True,
             'mensaje_exito': mensaje_exito
         })
-
     return render(request, 'formulario.html')
 
 
 @login_required
 def evidencias_list(request):
-    """Lista de envíos con filtros, búsqueda y paginación."""
     consulta = Envio.objects.select_related('usuario').all()
-
-    # Filtros básicos: proyecto y fechas
     proyecto = request.GET.get('proyecto', '')
     inicio = request.GET.get('start', '')
     fin = request.GET.get('end', '')
     if proyecto:
         consulta = consulta.filter(proyecto=proyecto)
     consulta = apply_date_filters(consulta, inicio, fin)
-
-    # Búsqueda por nombre, tipo y observaciones
     termino_busqueda = (request.GET.get('q') or '').strip()
     if termino_busqueda:
         consulta = consulta.filter(
@@ -318,8 +272,6 @@ def evidencias_list(request):
             Q(tipo_evidencia__icontains=termino_busqueda) |
             Q(observaciones__icontains=termino_busqueda)
         )
-
-    # Ordenamiento
     orden = request.GET.get('order', 'fecha_envio')
     direccion = request.GET.get('dir', 'desc')
     permitidos = {'fecha_envio', 'nombre', 'proyecto', 'tipo_evidencia'}
@@ -328,26 +280,19 @@ def evidencias_list(request):
         consulta = consulta.order_by(criterio_orden)
     else:
         consulta = consulta.order_by('-fecha_envio')
-
-    # Paginación (tamaño fijo)
     paginador = Paginator(consulta, 10)
     numero_pagina = request.GET.get('page')
     objeto_pagina = paginador.get_page(numero_pagina)
-
-    # Estadísticas para panel
     total_envios = consulta.count()
     hoy = datetime.date.today()
     hace_30 = hoy - datetime.timedelta(days=30)
     hace_60 = hoy - datetime.timedelta(days=60)
     nuevas_30d = consulta.filter(fecha_envio__gte=hace_30).count()
     nuevas_prev_30d = consulta.filter(fecha_envio__gte=hace_60, fecha_envio__lt=hace_30).count()
-
-    # Conteo de aprobadas usando el campo explícito 'aprobada'
     aprobadas = consulta.filter(aprobada=True).count()
     aprobadas_30d = consulta.filter(aprobada=True, fecha_envio__gte=hace_30).count()
     aprobadas_prev_30d = consulta.filter(aprobada=True, fecha_envio__gte=hace_60, fecha_envio__lt=hace_30).count()
 
-    # Cambios porcentuales (comparando últimos 30 días vs 30 días anteriores)
     def pct_change(current, previous):
         try:
             if previous == 0:
@@ -358,13 +303,10 @@ def evidencias_list(request):
 
     pct_nuevas = pct_change(nuevas_30d, nuevas_prev_30d)
     pct_aprobadas = pct_change(aprobadas_30d, aprobadas_prev_30d)
-    pct_total = pct_change(nuevas_30d, nuevas_prev_30d)  # proxy: growth driven by nuevas
-    # Valores absolutos para mostrar sin usar filtros no disponibles en plantillas
+    pct_total = pct_change(nuevas_30d, nuevas_prev_30d)
     pct_nuevas_abs = abs(pct_nuevas) if pct_nuevas is not None else None
     pct_aprobadas_abs = abs(pct_aprobadas) if pct_aprobadas is not None else None
     pct_total_abs = abs(pct_total) if pct_total is not None else None
-
-    # Conteo por proyecto (categorías por áreas: TUGA, DEPOS, GIVIT, LEM, etc.)
     proyectos_guardados = list(Envio.objects.values_list('proyecto', flat=True).distinct())
     choice_map = {c[0]: c[1] for c in Envio.PROYECTO_CHOICES}
     categorias_labels = []
@@ -373,8 +315,6 @@ def evidencias_list(request):
         if code and code in proyectos_guardados:
             categorias_labels.append(label)
             categorias_data.append(consulta.filter(proyecto=code).count())
-
-    # Datos trimestrales (últimos N trimestres, configurable por GET 'quarters')
     try:
         num_quarters = int(request.GET.get('quarters', 4))
     except Exception:
@@ -383,10 +323,8 @@ def evidencias_list(request):
     trimestres_labels = []
     datos_trimestrales_nuevas = []
     datos_trimestrales_aprobadas = []
-    # calcular trimestre actual
     current_year = hoy.year
     current_quarter = (hoy.month - 1) // 3 + 1
-    # construir lista de (year,quarter) para últimos num_quarters trimestres
     q_list = []
     y = current_year
     q = current_quarter
@@ -396,26 +334,19 @@ def evidencias_list(request):
         if q == 0:
             q = 4
             y -= 1
-
     for (y, q) in q_list:
-        # determinar rango de fechas del trimestre
         start_month = (q - 1) * 3 + 1
         start_date = datetime.date(y, start_month, 1)
-        # end_date: último día del tercer mes
         end_month = start_month + 2
         if end_month == 12:
             end_day = 31
         else:
-            # obtener primer día del siguiente mes y restar 1
             next_month = end_month + 1
             end_day = (datetime.date(y, next_month, 1) - datetime.timedelta(days=1)).day
         end_date = datetime.date(y, end_month, end_day)
-
         trimestres_labels.append(f"Q{q} {y}")
         datos_trimestrales_nuevas.append(consulta.filter(fecha_envio__gte=start_date, fecha_envio__lte=end_date).count())
         datos_trimestrales_aprobadas.append(consulta.filter(fecha_envio__gte=start_date, fecha_envio__lte=end_date, aprobada=True).count())
-
-    # Top usuarios (por número de envíos)
     top_users_qs = consulta.values('usuario__first_name', 'usuario__last_name', 'usuario__username').annotate(total=Count('id')).order_by('-total')[:6]
     usuarios_labels = []
     usuarios_data = []
@@ -425,12 +356,8 @@ def evidencias_list(request):
             name = f"{name} {u.get('usuario__last_name')}"
         usuarios_labels.append(name)
         usuarios_data.append(u['total'])
-
-    # Opciones de proyectos existentes en la base (mostrar solo los guardados)
     proyectos_guardados = list(Envio.objects.values_list('proyecto', flat=True).distinct())
-    choice_map = {c[0]: c[1] for c in Envio.PROYECTO_CHOICES}
     opciones_proyectos = [(p, choice_map.get(p, p)) for p in proyectos_guardados if p]
-
     context = {
         'envios': objeto_pagina,
         'proyecto': proyecto,
@@ -442,11 +369,11 @@ def evidencias_list(request):
         'total_envios': total_envios,
         'nuevas_30d': nuevas_30d,
         'aprobadas': aprobadas,
-            'categorias_labels_json': json.dumps(categorias_labels, ensure_ascii=False),
-            'categorias_data_json': json.dumps(categorias_data),
-            'trimestres_labels_json': json.dumps(trimestres_labels, ensure_ascii=False),
-            'datos_trimestrales_nuevas_json': json.dumps(datos_trimestrales_nuevas),
-            'datos_trimestrales_aprobadas_json': json.dumps(datos_trimestrales_aprobadas),
+        'categorias_labels_json': json.dumps(categorias_labels, ensure_ascii=False),
+        'categorias_data_json': json.dumps(categorias_data),
+        'trimestres_labels_json': json.dumps(trimestres_labels, ensure_ascii=False),
+        'datos_trimestrales_nuevas_json': json.dumps(datos_trimestrales_nuevas),
+        'datos_trimestrales_aprobadas_json': json.dumps(datos_trimestrales_aprobadas),
         'usuarios_labels_json': json.dumps(usuarios_labels, ensure_ascii=False),
         'usuarios_data_json': json.dumps(usuarios_data),
         'pct_nuevas': pct_nuevas,
@@ -461,19 +388,16 @@ def evidencias_list(request):
 
 
 def instructor_table(request):
-    """Vista para mostrar tabla de instructores."""
     return render(request, 'instructor_table.html')
 
 
 def access_denied(request):
-    """Vista para mostrar página de acceso denegado."""
     return render(request, 'access_denied.html')
 
 
 @require_POST
 @require_group('coordinador')
 def set_aprobada(request, pk):
-    """Marca una `Envio.aprobada` True/False según el POST 'valor'."""
     envio = get_object_or_404(Envio, pk=pk)
     valor = request.POST.get('valor')
     envio.aprobada = True if valor in ('1', 'true', 'True', 'on') else False
@@ -482,10 +406,9 @@ def set_aprobada(request, pk):
     next_url = request.POST.get('next') or request.META.get('HTTP_REFERER') or '/evidencias/'
     return redirect(next_url)
 
-def exportar_csv(request):
-    """Exportar envíos a CSV."""
-    consulta = Envio.objects.select_related('usuario').all().order_by('-fecha_envio')
 
+def exportar_csv(request):
+    consulta = Envio.objects.select_related('usuario').all().order_by('-fecha_envio')
     respuesta = HttpResponse(content_type='text/csv')
     respuesta['Content-Disposition'] = 'attachment; filename="envios.csv"'
     escritor = csv.writer(respuesta)
@@ -500,6 +423,3 @@ def exportar_csv(request):
             (envio.observaciones or '').replace('\r\n', ' ').replace('\n', ' '),
         ])
     return respuesta
-
-
-
