@@ -6,20 +6,16 @@ from django.contrib.auth.models import User, Group
 import logging
 import traceback
 from django.db import transaction, IntegrityError
-from Gesicom.models import Envio
-import datetime
-from django.db.models import Count
-import json
 
 logger = logging.getLogger(__name__)
 
 
 ROLE_ROUTES = {
-	'instructor': 'role_instructor',
-	'investigador': 'role_investigador',
-	'dinamizador': 'role_dinamizador',
-	'coordinador': 'role_coordinador',
-	'usuario': 'usuario',
+    'instructor': 'role_instructor',
+    'investigador': 'role_investigador',
+    'dinamizador': 'role_dinamizador',
+    'coordinador': 'role_coordinador',
+    'usuario': 'usuario',
 }
 
 
@@ -108,7 +104,6 @@ def login_view(request):
 		context['success'] = success_msg
 	return render(request, 'login.html', context)
 
-
 def register_view(request):
 	rol = request.GET.get('role') or request.POST.get('role') or ''
 	if request.method == 'POST':
@@ -175,89 +170,14 @@ def register_view(request):
 
 	return render(request, 'register.html', {'rol': rol})
 
-
 @login_required(login_url='login')
 def panel_usuario(request):
-	"""Vista del panel personal del usuario."""
-	# Calcular métricas simples para el resumen de reportes
-	consulta = Envio.objects.all()
-	total_envios = consulta.count()
-	hoy = datetime.date.today()
-	desde_30 = hoy - datetime.timedelta(days=30)
-	nuevas_30d = consulta.filter(fecha_envio__gte=desde_30).count()
-	aprobadas = consulta.filter(aprobada=True).count()
-	aprobadas_30d = consulta.filter(aprobada=True, fecha_envio__gte=desde_30).count()
-
-	# Datos por categoría (si existen elecciones en el modelo)
-	categorias_labels = []
-	categorias_data = []
-	if hasattr(Envio, 'PROYECTO_CHOICES'):
-		proyectos_guardados = set(Envio.objects.values_list('proyecto', flat=True))
-		for code, label in Envio.PROYECTO_CHOICES:
-			if code and code in proyectos_guardados:
-				categorias_labels.append(label)
-				categorias_data.append(consulta.filter(proyecto=code).count())
-
-	# Trimestres (por defecto 4)
-	num_quarters = 4
-	trimestres_labels = []
-	datos_trimestrales_nuevas = []
-	datos_trimestrales_aprobadas = []
-	current_year = hoy.year
-	current_quarter = (hoy.month - 1) // 3 + 1
-	q_list = []
-	y = current_year
-	q = current_quarter
-	for _ in range(num_quarters):
-		q_list.insert(0, (y, q))
-		q -= 1
-		if q == 0:
-			q = 4
-			y -= 1
-	for (y, q) in q_list:
-		start_month = (q - 1) * 3 + 1
-		start_date = datetime.date(y, start_month, 1)
-		end_month = start_month + 2
-		# calcular último día del mes
-		if end_month == 12:
-			end_day = 31
-		else:
-			next_month = end_month + 1
-			end_day = (datetime.date(y, next_month, 1) - datetime.timedelta(days=1)).day
-		end_date = datetime.date(y, end_month, end_day)
-		trimestres_labels.append(f"Q{q} {y}")
-		datos_trimestrales_nuevas.append(consulta.filter(fecha_envio__gte=start_date, fecha_envio__lte=end_date).count())
-		datos_trimestrales_aprobadas.append(consulta.filter(fecha_envio__gte=start_date, fecha_envio__lte=end_date, aprobada=True).count())
-
-	# Top usuarios
-	top_users_qs = consulta.values('usuario__first_name', 'usuario__last_name', 'usuario__username').annotate(total=Count('id')).order_by('-total')[:6]
-	usuarios_labels = []
-	usuarios_data = []
-	for u in top_users_qs:
-		name = u.get('usuario__first_name') or u.get('usuario__username') or 'Usuario'
-		if u.get('usuario__last_name'):
-			name = f"{name} {u.get('usuario__last_name')}"
-		usuarios_labels.append(name)
-		usuarios_data.append(u['total'])
-
-	context = {
-		'total_envios': total_envios,
-		'nuevas_30d': nuevas_30d,
-		'aprobadas': aprobadas,
-		'aprobadas_30d': aprobadas_30d,
-		'categorias_labels_json': json.dumps(categorias_labels, ensure_ascii=False),
-		'categorias_data_json': json.dumps(categorias_data),
-		'trimestres_labels_json': json.dumps(trimestres_labels, ensure_ascii=False),
-		'datos_trimestrales_nuevas_json': json.dumps(datos_trimestrales_nuevas),
-		'datos_trimestrales_aprobadas_json': json.dumps(datos_trimestrales_aprobadas),
-		'usuarios_labels_json': json.dumps(usuarios_labels, ensure_ascii=False),
-		'usuarios_data_json': json.dumps(usuarios_data),
-	}
-	return render(request, 'usuario/panel_usuario.html', context)
+    """Vista del panel personal del usuario."""
+    return render(request, 'usuario/panel_usuario.html')
 
 
 def logout_view(request):
-	"""Cerrar sesión del usuario."""
-	logout(request)
-	return redirect('login')
+    """Cerrar sesión del usuario."""
+    logout(request)
+    return redirect('login')
 

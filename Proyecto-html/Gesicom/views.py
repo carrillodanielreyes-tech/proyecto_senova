@@ -140,71 +140,6 @@ def reportes(request):
 
     opcion_proyectos = [p for p, _ in Envio.PROYECTO_CHOICES]
 
-    # Además preparar datos para el panel: totales, trimestres, categorías y top usuarios
-    consulta_total = Envio.objects.all()
-    total_envios = consulta_total.count()
-    hoy = datetime.date.today()
-    desde_30 = hoy - datetime.timedelta(days=30)
-    nuevas_30d = consulta_total.filter(fecha_envio__gte=desde_30).count()
-    aprobadas = consulta_total.filter(aprobada=True).count()
-    aprobadas_30d = consulta_total.filter(aprobada=True, fecha_envio__gte=desde_30).count()
-
-    # Categorías
-    categorias_labels = []
-    categorias_data = []
-    if hasattr(Envio, 'PROYECTO_CHOICES'):
-        proyectos_guardados = set(Envio.objects.values_list('proyecto', flat=True))
-        choice_map = {c[0]: c[1] for c in Envio.PROYECTO_CHOICES}
-        for code, label in Envio.PROYECTO_CHOICES:
-            if code and code in proyectos_guardados:
-                categorias_labels.append(choice_map.get(code, code))
-                categorias_data.append(consulta_total.filter(proyecto=code).count())
-
-    # Trimestres
-    try:
-        num_quarters = int(request.GET.get('quarters', 4))
-    except Exception:
-        num_quarters = 4
-    num_quarters = max(1, min(24, num_quarters))
-    trimestres_labels = []
-    datos_trimestrales_nuevas = []
-    datos_trimestrales_aprobadas = []
-    current_year = hoy.year
-    current_quarter = (hoy.month - 1) // 3 + 1
-    q_list = []
-    y = current_year
-    q = current_quarter
-    for _ in range(num_quarters):
-        q_list.insert(0, (y, q))
-        q -= 1
-        if q == 0:
-            q = 4
-            y -= 1
-    for (y, q) in q_list:
-        start_month = (q - 1) * 3 + 1
-        start_date = datetime.date(y, start_month, 1)
-        end_month = start_month + 2
-        if end_month == 12:
-            end_day = 31
-        else:
-            next_month = end_month + 1
-            end_day = (datetime.date(y, next_month, 1) - datetime.timedelta(days=1)).day
-        end_date = datetime.date(y, end_month, end_day)
-        trimestres_labels.append(f"Q{q} {y}")
-        datos_trimestrales_nuevas.append(consulta_total.filter(fecha_envio__gte=start_date, fecha_envio__lte=end_date).count())
-        datos_trimestrales_aprobadas.append(consulta_total.filter(fecha_envio__gte=start_date, fecha_envio__lte=end_date, aprobada=True).count())
-
-    # Top usuarios
-    top_users_qs = consulta_total.values('usuario__first_name', 'usuario__last_name', 'usuario__username').annotate(total=Count('id')).order_by('-total')[:6]
-    usuarios_labels = []
-    usuarios_data = []
-    for u in top_users_qs:
-        name = u.get('usuario__first_name') or u.get('usuario__username') or 'Usuario'
-        if u.get('usuario__last_name'):
-            name = f"{name} {u.get('usuario__last_name')}"
-        usuarios_labels.append(name)
-        usuarios_data.append(u['total'])
-
     context = {
         'proyecto': proyecto,
         'start': inicio,
@@ -212,17 +147,6 @@ def reportes(request):
         'opciones_proyectos': opcion_proyectos,
         'estadisticas_categoria': estadisticas_categoria,
         'estadisticas_mensuales': estadisticas_mensuales,
-        'total_envios': total_envios,
-        'nuevas_30d': nuevas_30d,
-        'aprobadas': aprobadas,
-        'aprobadas_30d': aprobadas_30d,
-        'categorias_labels_json': json.dumps(categorias_labels, ensure_ascii=False),
-        'categorias_data_json': json.dumps(categorias_data),
-        'trimestres_labels_json': json.dumps(trimestres_labels, ensure_ascii=False),
-        'datos_trimestrales_nuevas_json': json.dumps(datos_trimestrales_nuevas),
-        'datos_trimestrales_aprobadas_json': json.dumps(datos_trimestrales_aprobadas),
-        'usuarios_labels_json': json.dumps(usuarios_labels, ensure_ascii=False),
-        'usuarios_data_json': json.dumps(usuarios_data),
     }
     return render(request, 'admin/reportes.html', context)
 
