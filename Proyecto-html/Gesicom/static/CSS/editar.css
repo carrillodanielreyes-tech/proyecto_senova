@@ -4,13 +4,11 @@
     box-sizing:border-box;
 }
 
-body{
-    background: linear-gradient(135deg,#e6f2df,#f7faf5);
-    display:flex;
-    justify-content:center;
-    align-items:center;
-    min-height:100vh;
-    font-family:'Lora',serif;
+body {
+    background: linear-gradient(135deg, #e6f2df, #f7faf5);
+    min-height: 100vh;
+    font-family: 'Lora', serif;
+    padding: 0px;
 }
 
 /* Ventana principal */
@@ -23,6 +21,7 @@ body{
     overflow:hidden;
     box-shadow:0 10px 40px rgba(0,0,0,0.12);
     transition:transform .3s ease;
+    
 }
 
 .window:hover{
@@ -64,35 +63,35 @@ body{
 
 /* Contenido */
 
-.content{
-    padding:32px 50px 50px;
+.content {
+    padding: 8px 30px 50px;
+    max-width: 700px;
+    margin: 0 auto;
 }
 
-/* Header */
 
-header{
-    display:flex;
-    justify-content:space-between;
-    align-items:center;
-    padding-bottom:24px;
-    border-bottom:1px solid #e2edd9;
-    margin-bottom:30px;
+
+header {
+    display: flex;
+    justify-content: flex-end;
+    gap: 100px;
+    align-items: center;
+    padding-bottom: 0px;
+    border-bottom: 1px solid #e2edd9;
+    margin-bottom: 0px;
 }
-
-.logo{
-    height:55px;
-}
-
 /* Navegación */
 
 nav a{
-    margin-left:20px;
+    margin-left: 12px;
     text-decoration:none;
     color:#3b6d1f;
     font-size:15px;
     font-family:'Lora',serif;
     position:relative;
     transition:color .2s;
+        white-space: nowrap;
+
 }
 
 nav a::after{
@@ -113,14 +112,23 @@ nav a:hover{
 nav a:hover::after{
     width:100%;
 }
+nav {
+    display: flex;
+    align-items: center;
+    flex-wrap: nowrap;
+    gap: 4px;
+    white-space: nowrap;
+}
 
 /* Título */
 
 h1{
     font-size:32px;
-    font-weight:700;
+    font-weight:680;
     color:#1e420f;
-    margin-bottom:10px;
+    
+    margin-bottom:0;
+    margin-top: 0;
 }
 
 /* Formulario */
@@ -135,6 +143,7 @@ form {
     border-radius: 16px;
     box-shadow: 0 4px 24px rgba(30,70,20,0.08);
     border: 1px solid #e2edd9;
+    width: 100%;
 }
 
 label{
