@@ -124,13 +124,17 @@ h1{
 }
 
 /* Formulario */
-
-form{
-    display:flex;
-    flex-direction:column;
-    gap:20px;
-    max-width:560px;
-    margin-top:24px;
+form {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    max-width: 560px;
+    margin-top: 24px;
+    background: white;
+    padding: 36px 40px;
+    border-radius: 16px;
+    box-shadow: 0 4px 24px rgba(30,70,20,0.08);
+    border: 1px solid #e2edd9;
 }
 
 label{
